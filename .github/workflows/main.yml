@@ -3,31 +3,45 @@ name: rolespipeline
 
 # Controls when the action will run. Invokes the workflow on push events but only for the main branch
 on: 
-  push:
-    branches:  master 
-  # pull_request:
-  #   branches: [ main ]
+  workflow_dispatch:
+        inputs:
+            ACTION:
+                description: 'Choose operation'
+                required: true
+                type: choice
+                options:
+                    - create_Ec2
+                    - create_s3
 
 env:
   
   AWS_REGION : "us-east-1" 
+  AWS_ACCESS_KEY_ID: "AKIA6QOAMFPOURFYCBDZ"
+  AWS_SECRET_ACCESS_KEY: "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"
 
 # Permission can be added at job level or wocd ../rkflow level    
 permissions:
       id-token: write   # This is required for requesting the JWT
       contents: read    # This is required for actions/checkout
 jobs:
-  staticWebHosting:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Git clone the repository
-        uses: actions/checkout@v3
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v1.7.0
-        with:
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}  #change to reflect your IAM role’s ARN
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: ${{ env.AWS_REGION }}
-      # Hello from AWS: WhoAmI
-      - name: deploy static site
-        run: aws s3 sync . s3://statwebhosting --delete
+    create_Ec2:
+        if: ${{ github.event.inputs.ACTION == 'create_Ec2' }}
+        runs-on: ubuntu-latest
+        steps:
+          - name: Git clone the repository
+            uses: actions/checkout@v3
+          - name: configure aws credentials
+            uses: aws-actions/configure-aws-credentials@v1.7.0
+            with:
+              aws-access-key-id: ${{env.AWS_ACCESS_KEY_ID}}  #change to reflect your IAM role’s ARN
+              aws-secret-access-key: ${{env.AWS_SECRET_ACCESS_KEY}}
+              aws-region: ${{ env.AWS_REGION }}
+          # Hello from AWS: WhoAmI
+          - name: create s3 bucket
+            run: aws s3api create-bucket \
+                 --bucket my-bucket \
+                  --region eu-west-1 \
+                  --create-bucket-configuration LocationConstraint=eu-west-1
+
+  
+    
