@@ -1,29 +1,23 @@
-resource "aws_iam_openid_connect_provider" "githubOidc" {
- url = "https://token.actions.githubusercontent.com"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.16"
+    }
+  }
 
- client_id_list = [
-   "sts.amazonaws.com"
- ]
-
- thumbprint_list = ["a031c46782e6e6c662c2c87c76da9aa62ccabd8e"]
+  required_version = ">= 1.2.0"
 }
-data "aws_iam_policy_document" "github_allow" {
- statement {
-   effect  = "Allow"
-   actions = ["sts:AssumeRoleWithWebIdentity"]
-   principals {
-     type        = "Federated"
-     identifiers = [aws_iam_openid_connect_provider.githubOidc.arn]
-   }
-   condition {
-     test     = "StringLike"
- variable = "token.actions.githubusercontent.com:sub"
-     values   = ["repo:${GitHubOrg}/${GitHubRepo}:*"]
 
-   }
- }
+provider "aws" {
+  region  = "us-west-2"
 }
- resource "aws_iam_role" "github_role" {
- name               = "GithubActionsRole"
- assume_role_policy = data.aws_iam_policy_document.github_allow.json
+
+resource "aws_instance" "app_server" {
+  ami           = "ami-830c94e3"
+  instance_type = "t2.micro"
+
+  tags = {
+    Name = "ExampleAppServerInstance"
+  }
 }

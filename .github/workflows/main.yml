@@ -40,6 +40,29 @@ jobs:
           - name: check identity
             run: |
                 aws sts get-caller-identity
+          - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v1.3.2
+
+          - name: Verify Terraform version
+            working-directory: terraform/infrastructure
+            run: terraform --version 
+          
+          - name: Terraform Init
+            working-directory: terraform/infrastructure
+            run: terraform init -backend-config='bucket=aws-gsec-csdc-devl-automation'
+
+          - name: Terraform Validation
+            working-directory: terraform/infrastructure
+            run: terraform validate
+
+          - name: Terraform Plan
+            working-directory: terraform/infrastructure
+            run: terraform plan 
+            #  run: terraform plan -var-file devl.tfvars --out=tfplan
+
+          - name: Terraform Apply
+            working-directory: terraform/infrastructure
+            run: terraform apply       
 
   
     
