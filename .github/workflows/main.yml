@@ -16,8 +16,8 @@ on:
 env:
   
   AWS_REGION : "us-east-1" 
-  AWS_ACCESS_KEY_ID: "AKIA6QOAMFPOURFYCBDZ"
-  AWS_SECRET_ACCESS_KEY: "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"
+  AWS_ACCESS_KEY_ID: "AKIAWKKSGOCX2MKMLA5I"
+  AWS_SECRET_ACCESS_KEY: "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"
 
 # Permission can be added at job level or wocd ../rkflow level    
 permissions:
