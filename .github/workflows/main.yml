@@ -49,7 +49,7 @@ jobs:
           
           - name: Terraform Init
             working-directory: terraform/infrastructure
-            run: terraform init -backend-config='bucket=aws-gsec-csdc-devl-automation'
+            run: terraform init 
 
           - name: Terraform Validation
             working-directory: terraform/infrastructure
