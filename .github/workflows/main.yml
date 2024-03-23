@@ -2,16 +2,22 @@
 name: rolespipeline
 
 # Controls when the action will run. Invokes the workflow on push events but only for the main branch
-on: 
-  workflow_dispatch:
-        inputs:
-            ACTION:
-                description: 'Choose operation'
-                required: true
-                type: choice
-                options:
-                    - create_Ec2
-                    - create_s3
+# on: 
+#   workflow_dispatch:
+#         inputs:
+#             ACTION:
+#                 description: 'Choose operation'
+#                 required: true
+#                 type: choice
+#                 options:
+#                     - create_Ec2
+#                     - create_s3
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 env:
   
@@ -23,46 +29,64 @@ env:
 permissions:
       id-token: write   # This is required for requesting the JWT
       contents: read    # This is required for actions/checkout
+
 jobs:
-    create_Ec2:
-        if: ${{ github.event.inputs.ACTION == 'create_Ec2' }}
-        runs-on: ubuntu-latest
-        steps:
-          - name: Git clone the repository
-            uses: actions/checkout@v3
-          - name: configure aws credentials
-            uses: aws-actions/configure-aws-credentials@v1.7.0
-            with:
-              aws-access-key-id: ${{env.AWS_ACCESS_KEY_ID}}  #change to reflect your IAM role’s ARN
-              aws-secret-access-key: ${{env.AWS_SECRET_ACCESS_KEY}}
-              aws-region: ${{ env.AWS_REGION }}
-          # Hello from AWS: WhoAmI
-          - name: check identity
-            run: |
-                aws sts get-caller-identity
-          - name: Setup Terraform
-            uses: hashicorp/setup-terraform@v1.3.2
+  AssumeRoleAndCallIdentity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1.7.0
+        with:
+          role-to-assume: "${{ vars.AWS_ROLE_TO_ASSUME }}" #change to reflect your IAM role’s ARN
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+      # Hello from AWS: WhoAmI
+      - name: Sts GetCallerIdentity
+        run: |
+          aws sts get-caller-identity
+ 
+# jobs:
+#     create_Ec2:
+#         if: ${{ github.event.inputs.ACTION == 'create_Ec2' }}
+#         runs-on: ubuntu-latest
+#         steps:
+#           - name: Git clone the repository
+#             uses: actions/checkout@v3
+#           - name: configure aws credentials
+#             uses: aws-actions/configure-aws-credentials@v1.7.0
+#             with:
+#               aws-access-key-id: ${{env.AWS_ACCESS_KEY_ID}}  #change to reflect your IAM role’s ARN
+#               aws-secret-access-key: ${{env.AWS_SECRET_ACCESS_KEY}}
+#               aws-region: ${{ env.AWS_REGION }}
+#           # Hello from AWS: WhoAmI
+#           - name: check identity
+#             run: |
+#                 aws sts get-caller-identity
+#           - name: Setup Terraform
+#             uses: hashicorp/setup-terraform@v1.3.2
 
-          - name: Verify Terraform version
-            working-directory: terraform/infrastructure
-            run: terraform --version 
+#           - name: Verify Terraform version
+#             working-directory: terraform/infrastructure
+#             run: terraform --version 
           
-          - name: Terraform Init
-            working-directory: terraform/infrastructure
-            run: terraform init 
+#           - name: Terraform Init
+#             working-directory: terraform/infrastructure
+#             run: terraform init 
 
-          - name: Terraform Validation
-            working-directory: terraform/infrastructure
-            run: terraform validate
+#           - name: Terraform Validation
+#             working-directory: terraform/infrastructure
+#             run: terraform validate
 
-          - name: Terraform Plan
-            working-directory: terraform/infrastructure
-            run: terraform plan 
-            #  run: terraform plan -var-file devl.tfvars --out=tfplan
+#           - name: Terraform Plan
+#             working-directory: terraform/infrastructure
+#             run: terraform plan 
+#             #  run: terraform plan -var-file devl.tfvars --out=tfplan
 
-          - name: Terraform Apply
-            working-directory: terraform/infrastructure
-            run: terraform apply -auto-approve      
+#           - name: Terraform Apply
+#             working-directory: terraform/infrastructure
+#             run: terraform apply -auto-approve      
 
   
     
